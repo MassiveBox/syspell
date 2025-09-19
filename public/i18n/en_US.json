@@ -1,20 +1,76 @@
 {
-    "addTopBarIcon": "Add a top bar icon by plugin",
-    "cancel": "Cancel",
-    "save": "Save",
-    "byeMenu": "Bye, Menu!",
-    "helloPlugin": "Hello, Plugin!",
-    "byePlugin": "Bye, Plugin!",
-    "showDialog": "Show dialog",
-    "removedData": "Data deleted",
-    "confirmRemove": "Confirm to delete the data in ${name}?",
-    "insertEmoji": "Insert Emoji",
-    "removeSpace": "Remove Space",
-    "getTab": "Print out all opened custom tabs in the debugger",
-    "name": "SiYuan",
-    "hello": {
-        "makesure": "Before using this template, please read the <a href=\"https://github.com/siyuan-note/plugin-sample\">offical sample</a>, make sure that you've known about the pipeline for plugin developing."
+  "settings":{
+    "info": {
+      "title": "Information",
+      "description": "The default grammar checking server is provided for free by the developer, <a href='https://massive.box'>MassiveBox</a>. It does not save, sell or share the content of your text.<br>Running a LanguageTool server is resource intensive, so if you find this plugin useful, please consider <a href=\"https://s.massive.box/siyuan-plugin-donate\">donating</a> to help me keep it alive!"
     },
-    "hintTitle":"About",
-    "hintDesc":"<a href='https://github.com/siyuan-note/plugin-sample-vite-svelte'>plugin-sample-vite-svelte</a><br>@frostime<br>@88250<br>@zxkmm"
+    "server": {
+      "title": "LanguageTool server",
+      "description": "The URL of the LanguageTool server, with the trailing slash. Some suggestions:\n<li>Free server provided by the plugin developer, slower but without limits: <code>https://lt.massive.box/</code></li>\n<li>Free server provided by LanguageTool, very strict rate limits: <code>https://languagetool.org/api/</code></li>\n<li>If you have <a href=\"https://languagetool.org/premium\">LanguageTool Premium</a>: <code>https://api.languagetoolplus.com/</code></li>\n<li>If you're running the self-hosted <a href=\"https://dev.languagetool.org/http-server\">embedded server</a>: <code>http://localhost:8081/</code></li>"
+    },
+    "username": {
+      "title": "LanguageTool Account username [Optional]",
+      "description": "If you have a LanguageTool account with premium features, enter the username here"
+    },
+    "apiKey": {
+      "title": "LanguageTool API Key [Optional]",
+      "description": "If you have a LanguageTool account with premium features, enter the API key here. <a href=\"https://languagetool.org/editor/settings/access-tokens\">Your API key</a>"
+    },
+    "picky": {
+      "title": "Picky mode",
+      "description": "Check for additional rules that you might only find useful in the context of formal text"
+    },
+    "motherTongue": {
+      "title": "Mother tongue",
+      "description": "Check and report false friends for some language pairs"
+    },
+    "preferredVariants": {
+      "title": "Preferred variants",
+      "description": "A comma-separated list of preferred variants for languages that have them. For example: <code>en-US,de-DE</code> or <code>en-GB,de-DE</code>"
+    },
+    "enabledByDefault": {
+      "title": "Enable grammar checking by default",
+      "description": "If turned on, grammar checking is enabled for all documents, and must be manually disabled for each document where it's not needed.<br />\nIf turned off, grammar checking is disabled for all documents, and must be manually enabled for each document where it's needed."
+    },
+    "defaultLanguage": {
+      "title": "Default language for documents",
+      "description": "When a language is not manually set for a document, this one will be used for grammar suggestions.<br>If you select auto-detection, some blocks may be recognized incorrectly."
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Enable to send anonymous usage data to the developer. <a href='https://s.massive.box/jsdraw-plugin-privacy'>Privacy Policy</a>"
+    },
+    "customDictionary": {
+      "title": "Custom dictionary",
+      "description": "A comma-separated list of words that will not trigger the grammar checker. For example: <code>hello,SiYuan</code><br>After editing and saving, reload SiYuan to apply."
+    },
+    "experimentalCorrect": {
+      "title": "<b>[Feature preview]</b> Apply corrections when selected",
+      "description": "<b>[Feature preview]</b> This feature will modify the content of your documents when used, and can alter them significantly without the ability to roll the changes back. This feature is not recommended for production workspaces.<br><br>When a correction is chosen, apply it to the document instead of just having copied to your clipboard."
+    }
+  },
+  "errors": {
+    "builtInEnabled": "The built-in spell checker is enabled, and may conflict with the SySpell Plugin and cause confusion. Disable it in Settings > Editor.",
+    "cantRenderLabel": "Can't provide grammar suggestions for this block",
+    "cantRender": "This block contains elements, such as images or tables, that don't work well with the SySpell system.",
+    "waitingForSuggestions": "Grammar suggestions for this block aren't ready yet, please close the menu and open it again after a few seconds.",
+    "correctionNotEnabled": "The correction has been copied to your clipboard. <small>Suggestions can be auto-applied when selected. Visit the plugin's settings to enable.</small>",
+    "checkServer": "Failed to contact grammar checking server, make sure it's correctly set in the plugin settings.",
+    "fatal": "The grammar checking plugin will quit now. Please restart SiYuan.",
+    "notImplementedNotebookSettings": "Notebook-wide grammar checking settings aren't implemented yet, they will be added in a future version. Thanks for your patience!"
+  },
+  "docMenu": {
+    "documentStatus": "Document status",
+    "language": "Language",
+    "status": "Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "toggleSpellCheck": "Toggle grammar checking",
+    "setDocumentLanguage": "Set document language",
+    "autodetectLanguage": "Autodetect [block by block]"
+  },
+  "textMenu": {
+    "addToDictionary": "Add to dictionary",
+    "addedToDictionary": "Added to dictionary: "
+  }
 }
