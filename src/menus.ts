@@ -1,8 +1,7 @@
 import {Menu, showMessage, subMenu} from 'siyuan';
 import SpellCheckPlugin from "@/index";
 import {getBlockAttrs, setBlockAttrs} from "@/api";
-import {LanguageTool} from "@/languagetool";
-import {PluginSettings, Settings} from "@/settings";
+import {Settings} from "@/settings";
 import {ProtyleHelpers} from "@/protyleHelpers";
 import {SuggestionEngine} from "@/suggestions";
 
@@ -31,14 +30,14 @@ export class Menus {
             }
         })
 
-        if(suggestion.type.typeName == 'UnknownWord') {
+        if(suggestion.typeName == 'UnknownWord') {
             // add to dictionary
             menu.addItem({
                 icon: 'add',
                 label: this.plugin.i18nx.textMenu.addToDictionary,
                 click: async () => {
                     void this.plugin.analytics.sendEvent('menu-click-add-to-dictionary');
-                    const word = SuggestionEngine.suggestionToWrongText(suggestion)
+                    const word = SuggestionEngine.suggestionToWrongText(suggestion, blockID)
                     await Settings.addToDictionary(word, this.plugin.settingsUtil)
                     showMessage(this.plugin.i18nx.textMenu.addedToDictionary + word, 5000, 'info')
                     await this.plugin.suggestions.renderSuggestions(blockID)
@@ -50,15 +49,15 @@ export class Menus {
         suggestion.replacements.forEach((replacement, correctionNumber) => {
             menu.addItem({
                 icon: 'spellcheck',
-                label: replacement.value,
+                label: replacement,
                 click: async () => {
                     void this.plugin.analytics.sendEvent('menu-click-correct', {
-                        'type': suggestion.rule.category.id
+                        'type': suggestion.typeName
                     });
                     if(this.plugin.settingsUtil.get('experimentalCorrect')) {
                         void this.plugin.suggestions.correctSuggestion(blockID, suggestionNumber, correctionNumber)
                     }else{
-                        void navigator.clipboard.writeText(replacement.value)
+                        void navigator.clipboard.writeText(replacement)
                         showMessage(this.plugin.i18nx.errors.correctionNotEnabled, 5000, 'info')
                     }
                 }
@@ -111,7 +110,7 @@ export class Menus {
             label: this.plugin.i18nx.docMenu.setDocumentLanguage,
             click: async (_, ev: MouseEvent) => {
                 void this.plugin.analytics.sendEvent('docmenu-click-setlang-1');
-                const languages = await LanguageTool.getLanguages(<PluginSettings>this.plugin.settingsUtil.dump())
+                const languages = await this.plugin.onlineSpellChecker.getLanguages()
                 const langMenu = new Menu('spellCheckLangMenu');
                 langMenu.addItem({
                     icon: 'autodetect',

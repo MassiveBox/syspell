@@ -1,6 +1,6 @@
 import {ProtyleHelpers} from "@/protyleHelpers";
 
-export class SpellChecker {
+export class SpellCheckerUI {
 
     private readonly blockID: string;
     private readonly docID: string;
@@ -111,13 +111,13 @@ export class SpellChecker {
             const top = rect.bottom - editorRect.top - 2 + this.block.scrollTop;
             const width = rect.width;
 
-            const offset = SpellChecker.distance(this.overlay, this.block)
+            const offset = SpellCheckerUI.distance(this.overlay, this.block)
 
             underline.style.left = (left + offset.h) + 'px';
             underline.style.top = (top + 2 + offset.v) + 'px';
             underline.style.width = width + 'px';
 
-            if(!SpellChecker.checkDontUnderline(width, charsCount)) {
+            if(!SpellCheckerUI.checkDontUnderline(width, charsCount)) {
                 this.overlay.appendChild(underline);
             }
         }

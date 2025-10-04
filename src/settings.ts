@@ -1,21 +1,7 @@
 import {SettingUtils} from "@/libs/setting-utils";
 import {showMessage} from 'siyuan';
-import {LanguageTool} from "@/languagetool";
 import SpellCheckPlugin from "@/index";
-
-export type PluginSettings = {
-    server: string
-    username: string
-    apiKey: string
-    picky: boolean
-    motherTongue: string
-    preferredVariants: string
-    enabledByDefault: boolean
-    defaultLanguage: string
-    preferredLanguages: string
-    analytics: boolean
-}
-
+import {LanguageTool, LanguageToolSettings} from "@/languagetool";
 
 export class Settings {
 
@@ -61,13 +47,12 @@ export class Settings {
         await su.load() // needed to fetch languages from server
         let languagesKV = {}
         try {
-            let languages = await LanguageTool.getLanguages(<PluginSettings>su.dump())
+            let languages = await new LanguageTool(<LanguageToolSettings>{server: su.get('server')}).getLanguages()
             languages.forEach(language => {
                 languagesKV[language.longCode] = language.name + ' [' + language.longCode + ']'
             })
-        } catch {
+        } catch(e) {
             showMessage(plugin.i18nx.errors.checkServer, -1, 'error')
-            showMessage(plugin.i18nx.errors.fatal, -1, 'error')
         }
 
         su.addItem({
@@ -131,11 +116,33 @@ export class Settings {
 
         su.addItem({
             type: 'checkbox',
+            key: 'offline',
+            title: to.offline.title,
+            description: to.offline.description,
+            value: false
+        })
+
+        su.addItem({
+            type: 'textinput',
+            key: 'offlineDicts',
+            title: to.offlineDicts.title,
+            description: to.offlineDicts.description,
+            value: 'en'
+        })
+
+        su.addItem({
+            type: 'checkbox',
             key: 'analytics',
             title: to.analytics.title,
             description: to.analytics.description,
             value: true
         })
+
+        su.save = async function (data?: any) {
+            data = data ?? this.dump();
+            await this.plugin.saveData(this.file, this.dump());
+            location.reload()
+        }.bind(su)
 
         await su.load()
         return su

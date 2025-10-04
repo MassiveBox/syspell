@@ -1,13 +1,13 @@
 import {ProtyleHelpers} from "@/protyleHelpers";
-import {LanguageTool, Suggestion} from "@/languagetool";
-import {PluginSettings, Settings} from "@/settings";
+import {Settings} from "@/settings";
 import {getChildBlocks, updateBlock} from "@/api";
-import {SpellChecker} from "@/spellchecker";
+import {SpellCheckerUI} from "@/spellCheckerUI";
 import {showMessage} from "siyuan";
 import SpellCheckPlugin from "@/index";
+import {Suggestion} from "@/spellChecker";
 
 interface StoredBlock {
-    spellChecker: SpellChecker;
+    spellChecker: SpellCheckerUI;
     suggestions: Suggestion[];
 }
 
@@ -40,7 +40,7 @@ export class SuggestionEngine {
         const children = await getChildBlocks(blockID)
         if(children.length == 0) {
             if(!(blockID in this.blockStorage)) {
-                const spellChecker = new SpellChecker(blockID, this.documentID)
+                const spellChecker = new SpellCheckerUI(blockID, this.documentID)
                 this.blockStorage[blockID] = {
                     spellChecker: spellChecker,
                     suggestions: []
@@ -90,11 +90,16 @@ export class SuggestionEngine {
             return this.suggestForBlock(blockID)
         }
 
-        try {
-            suggestions = await LanguageTool.check(text, this.documentLanguage, <PluginSettings>this.plugin.settingsUtil.dump())
-        }catch (_) {
-            showMessage(this.plugin.i18nx.errors.checkServer, 5000, 'error')
+        if(this.plugin.settingsUtil.get('offline')) {
+            suggestions = await this.plugin.offlineSpellChecker.check(text, [this.documentLanguage])
+        }else{
+            try {
+                suggestions = await this.plugin.onlineSpellChecker.check(text, [this.documentLanguage])
+            }catch (_) {
+                showMessage(this.plugin.i18nx.errors.checkServer, 5000, 'error')
+            }
         }
+
         this.blockStorage[blockID].suggestions = suggestions
 
     }
@@ -109,14 +114,15 @@ export class SuggestionEngine {
         }
         this.blockStorage[blockID].spellChecker.clearUnderlines()
         this.blockStorage[blockID].suggestions.forEach(suggestion => {
-            if(!Settings.isInCustomDictionary(SuggestionEngine.suggestionToWrongText(suggestion), this.plugin.settingsUtil)) {
+            if(!Settings.isInCustomDictionary(SuggestionEngine.suggestionToWrongText(suggestion, blockID), this.plugin.settingsUtil)) {
                 this.blockStorage[blockID].spellChecker.highlightCharacterRange(suggestion.offset, suggestion.offset + suggestion.length)
             }
         })
     }
 
-    static suggestionToWrongText(suggestion: Suggestion): string {
-        return suggestion.context.text.slice(suggestion.context.offset, suggestion.context.offset + suggestion.context.length)
+    static suggestionToWrongText(suggestion: Suggestion, blockID: string): string {
+        const blockTxt = ProtyleHelpers.fastGetBlockText(blockID)
+        return blockTxt.slice(suggestion.offset, suggestion.offset + suggestion.length)
     }
 
     private getAbsoluteOffsetInBlock(range: Range, blockID: string): number {
@@ -162,7 +168,7 @@ export class SuggestionEngine {
         const suggestion = this.blockStorage[blockID].suggestions[suggestionNumber]
         const rich = ProtyleHelpers.fastGetBlockHTML(blockID)
         const fixedOffset = this.adjustIndexForTags(rich, suggestion.offset)
-        const newStr = rich.slice(0, fixedOffset) + suggestion.replacements[correctionNumber].value + rich.slice(fixedOffset + suggestion.length)
+        const newStr = rich.slice(0, fixedOffset) + suggestion.replacements[correctionNumber] + rich.slice(fixedOffset + suggestion.length)
 
         console.log("new str " + newStr);
         await updateBlock('markdown', window.Lute.New().BlockDOM2Md(newStr), blockID)

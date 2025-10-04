@@ -47,6 +47,14 @@
     "experimentalCorrect": {
       "title": "<b>[Feature preview]</b> Apply corrections when selected",
       "description": "<b>[Feature preview]</b> This feature will modify the content of your documents when used, and can alter them significantly without the ability to roll the changes back. This feature is not recommended for production workspaces.<br><br>When a correction is chosen, apply it to the document instead of just having copied to your clipboard."
+    },
+    "offline": {
+      "title": "Offline mode",
+      "description": "If enabled, the plugin will use a local spell checker, which is faster and more privacy friendly, but doesn't provide advanced grammar checking"
+    },
+    "offlineDicts": {
+      "title": "Offline dictionaries",
+      "description": "Comma-separated list of dictionaries used for offline spell checking. <a href='https://github.com/wooorm/dictionaries/tree/main/dictionaries'>Available options</a>. Example: <code>en,it</code>"
     }
   },
   "errors": {
@@ -55,9 +63,9 @@
     "cantRender": "This block contains elements, such as images or tables, that don't work well with the SySpell system.",
     "waitingForSuggestions": "Grammar suggestions for this block aren't ready yet, please close the menu and open it again after a few seconds.",
     "correctionNotEnabled": "The correction has been copied to your clipboard. <small>Suggestions can be auto-applied when selected. Visit the plugin's settings to enable.</small>",
-    "checkServer": "Failed to contact grammar checking server, make sure it's correctly set in the plugin settings.",
-    "fatal": "The grammar checking plugin will quit now. Please restart SiYuan.",
-    "notImplementedNotebookSettings": "Notebook-wide grammar checking settings aren't implemented yet, they will be added in a future version. Thanks for your patience!"
+    "checkServer": "Failed to contact grammar checking server, make sure it's correctly set or enable Offline Mode in the plugin settings.",
+    "notImplementedNotebookSettings": "Notebook-wide grammar checking settings aren't implemented yet, they will be added in a future version. Thanks for your patience!",
+    "hunspellLoadError": "Failed loading offline spell checker: "
   },
   "docMenu": {
     "documentStatus": "Document status",
