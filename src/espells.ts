@@ -15,7 +15,7 @@ export class ESpellChecker implements SpellChecker {
 
         let suggestions: Suggestion[] = []
 
-        const regex =   /[\w']+/g;
+        const regex = /[\p{L}']+/gu;
         let match;
 
         while ((match = regex.exec(text)) !== null) {
