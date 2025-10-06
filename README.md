@@ -17,6 +17,7 @@ This plugin adds a fully featured grammar and spell checker for SiYuan, powered 
 - [x] Grammar checker like Grammarly
 - [x] Free and open-source
 - [x] [Self-hostable](https://dev.languagetool.org/http-server) grammar checking server
+- [x] Offline mode (only simple spell checking)
 - [x] Underlines are not edited into your notes
    <details>
       <summary>Why does this matter?</summary>
@@ -42,6 +43,8 @@ This project couldn't have been possible without (in no particular order):
 - The [SiYuan](https://github.com/siyuan-note/siyuan) project
 - [SiYuan plugin sample with vite and svelte](https://github.com/siyuan-note/plugin-sample-vite-svelte)
 - [LanguageTool](https://languagetool.org/)
+- [ESpells](https://github.com/Monkatraz/espells)
+- The authors of [offline dictionaries](https://github.com/wooorm/dictionaries?tab=readme-ov-file#list-of-dictionaries)
 
 Make sure you check them out and support them as well!
 
