@@ -1,28 +1,31 @@
-import {ProtyleHelpers} from "@/protyleHelpers";
+import {ProtyleHelper} from "@/protyleHelper";
 
 export class SpellCheckerUI {
 
     private readonly blockID: string;
-    private readonly docID: string;
+    private readonly protyle: ProtyleHelper;
     private block: HTMLElement;
     private overlay: HTMLElement;
 
-    constructor(blockID: string, docID: string) {
+    constructor(blockID: string, protyle: ProtyleHelper) {
         this.blockID  = blockID;
-        this.docID = docID;
+        this.protyle = protyle;
         this.setBlock()
     }
 
     private setBlock() {
 
-        this.block = <HTMLElement>ProtyleHelpers.fastGetBlockElement(this.blockID)
-        let overlay = <HTMLElement>ProtyleHelpers.fastGetOverlayElement(this.blockID)
+        this.block = <HTMLElement>this.protyle.fastGetBlockElement(this.blockID)
+        if(this.block == null) {
+            throw new Error(`Block ${this.blockID} not found`);
+        }
+        let overlay = <HTMLElement>ProtyleHelper.fastGetOverlayElement(this.blockID)
 
         if(overlay == null) {
             this.overlay = document.createElement('div')
             this.overlay.className = 'underline-overlay';
             this.overlay.setAttribute('for-block-id', this.blockID)
-            const protyleTitle = ProtyleHelpers.fastGetTitleElement(this.docID)
+            const protyleTitle = this.protyle.fastGetTitleElement()
             protyleTitle?.append(this.overlay)
         }else{
             if(this.overlay == null) {
@@ -144,7 +147,7 @@ export class SpellCheckerUI {
     }
 
     public destroy() {
-        let overlay = <HTMLElement>ProtyleHelpers.fastGetOverlayElement(this.blockID)
+        let overlay = <HTMLElement>ProtyleHelper.fastGetOverlayElement(this.blockID)
         overlay?.remove();
     }
 

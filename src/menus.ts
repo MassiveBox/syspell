@@ -2,8 +2,7 @@ import {Menu, showMessage, subMenu} from 'siyuan';
 import SpellCheckPlugin from "@/index";
 import {getBlockAttrs, setBlockAttrs} from "@/api";
 import {Settings} from "@/settings";
-import {ProtyleHelpers} from "@/protyleHelpers";
-import {SuggestionEngine} from "@/suggestions";
+import {ProtyleHelper} from "@/protyleHelper";
 
 export class Menus {
 
@@ -37,7 +36,7 @@ export class Menus {
                 label: this.plugin.i18nx.textMenu.addToDictionary,
                 click: async () => {
                     void this.plugin.analytics.sendEvent('menu-click-add-to-dictionary');
-                    const word = SuggestionEngine.suggestionToWrongText(suggestion, blockID)
+                    const word = this.plugin.suggestions.suggestionToWrongText(suggestion, blockID)
                     await Settings.addToDictionary(word, this.plugin.settingsUtil)
                     showMessage(this.plugin.i18nx.textMenu.addedToDictionary + word, 5000, 'info')
                     await this.plugin.suggestions.renderSuggestions(blockID)
@@ -72,7 +71,7 @@ export class Menus {
             icon: 'info',
             label: this.plugin.i18nx.docMenu.documentStatus,
             click: async () => {
-                const settings = await ProtyleHelpers.getDocumentSettings(docID, this.plugin.settingsUtil.get('enabledByDefault'), this.plugin.settingsUtil.get('defaultLanguage'))
+                const settings = await ProtyleHelper.getDocumentSettings(docID, this.plugin.settingsUtil.get('enabledByDefault'), this.plugin.settingsUtil.get('defaultLanguage'))
                 if(settings == null) {
                     void this.plugin.analytics.sendEvent('docmenu-click-info-notebook');
                     showMessage(this.plugin.i18nx.errors.notImplementedNotebookSettings, 5000, 'info')
@@ -93,7 +92,7 @@ export class Menus {
             click: async () => {
                 void this.plugin.analytics.sendEvent('docmenu-click-toggle');
                 const attrs = await getBlockAttrs(docID)
-                const settings = await ProtyleHelpers.getDocumentSettings(docID, this.plugin.settingsUtil.get('enabledByDefault'), this.plugin.settingsUtil.get('defaultLanguage'))
+                const settings = await ProtyleHelper.getDocumentSettings(docID, this.plugin.settingsUtil.get('enabledByDefault'), this.plugin.settingsUtil.get('defaultLanguage'))
                 if(settings == null) {
                     void this.plugin.analytics.sendEvent('docmenu-click-info-notebook');
                     showMessage(this.plugin.i18nx.errors.notImplementedNotebookSettings, 5000, 'info')

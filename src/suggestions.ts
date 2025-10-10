@@ -1,6 +1,6 @@
-import {ProtyleHelpers} from "@/protyleHelpers";
+import {ProtyleHelper} from "@/protyleHelper";
 import {Settings} from "@/settings";
-import {getChildBlocks, updateBlock} from "@/api";
+import {updateBlock} from "@/api";
 import {SpellCheckerUI} from "@/spellCheckerUI";
 import {showMessage} from "siyuan";
 import SpellCheckPlugin from "@/index";
@@ -8,7 +8,9 @@ import {Suggestion} from "@/spellChecker";
 
 interface StoredBlock {
     spellChecker: SpellCheckerUI;
-    suggestions: Suggestion[];
+    language: string;
+    suggestions: Suggestion[] | null;
+    protyle: ProtyleHelper;
 }
 
 type BlockStorage = Record<string, StoredBlock>;
@@ -17,10 +19,6 @@ export class SuggestionEngine {
 
     private blockStorage: BlockStorage = {};
     private plugin: SpellCheckPlugin;
-
-    public documentID: string;
-    public documentEnabled: boolean = false;
-    public documentLanguage: string = 'auto';
 
     constructor(plugin: SpellCheckPlugin) {
         this.plugin = plugin
@@ -36,71 +34,78 @@ export class SuggestionEngine {
         }
     }
 
-    private async discoverBlocks(blockID: string) {
-        const children = await getChildBlocks(blockID)
-        if(children.length == 0) {
-            if(!(blockID in this.blockStorage)) {
-                const spellChecker = new SpellCheckerUI(blockID, this.documentID)
-                this.blockStorage[blockID] = {
-                    spellChecker: spellChecker,
-                    suggestions: []
-                }
-            }
-        }else{
-            for (const child of children) {
-                await this.discoverBlocks(child.id)
-            }
-        }
+    public getProtyle(blockID: string) {
+        if(!(blockID in this.blockStorage)) { return null }
+        return this.blockStorage[blockID].protyle
     }
 
-    public async forAllBlocksSuggest(docID: string, suggest: boolean, render: boolean, remove: boolean) {
-        if(!this.documentEnabled) { return }
-        if(suggest) {
-            await this.discoverBlocks(docID) // updates this.blockStorage
-        }
+    public async storeBlocks(protyle: ProtyleHelper, documentLanguage: string) {
+        const blocks = protyle.getBlockElements()
+        blocks.forEach(block => {
+            const blockID = ProtyleHelper.getNodeId(block)
+            if(!blockID) {
+                return
+            }
+            if(!(blockID in this.blockStorage)) {
+                try {
+                    const spellChecker = new SpellCheckerUI(blockID, protyle)
+                    this.blockStorage[blockID] = {
+                        spellChecker: spellChecker,
+                        language: documentLanguage,
+                        suggestions: null,
+                        protyle: protyle
+                    }
+                }catch (_) {}
+            }
+        })
+    }
+
+    public async forAllBlocksSuggest(suggest: boolean = false, render: boolean = true) {
         const blockPromises = Object.keys(this.blockStorage).map(async (blockID) => {
-            if(suggest) {
+            if(!(blockID in this.blockStorage)) {
+                return
+            }
+            if(suggest && this.blockStorage[blockID].suggestions == null) {
                 await this.suggestForBlock(blockID)
             }
             if(render) {
                 await this.renderSuggestions(blockID)
-            }
-            if(remove) {
-                await this.removeSuggestionsAndRender(blockID)
             }
         });
         await Promise.all(blockPromises);
     }
 
     public async suggestAndRender(blockID: string) {
-        if(!this.documentEnabled) { return }
         await this.suggestForBlock(blockID)
         await this.renderSuggestions(blockID)
     }
 
     public async suggestForBlock(blockID: string) {
 
-        let suggestions: Suggestion[]
-        const text = ProtyleHelpers.fastGetBlockText(blockID)
-        if(text == null || !this.documentEnabled) {
+        if(!(blockID in this.blockStorage)) {
             return
         }
-        if(!(blockID in this.blockStorage)) {
-            await this.discoverBlocks(blockID)
-            return this.suggestForBlock(blockID)
+        const thisBlock = this.blockStorage[blockID]
+        thisBlock.suggestions = [] // we change from null so that it doesn't run again in forAllBlocksSuggest if we're waiting for the spell checker
+
+        let suggestions: Suggestion[]
+        const text = thisBlock.protyle.fastGetBlockText(blockID)
+        if(text == null || text == '') {
+            return
         }
 
         if(this.plugin.settingsUtil.get('offline')) {
-            suggestions = await this.plugin.offlineSpellChecker.check(text, [this.documentLanguage])
+            suggestions = await this.plugin.offlineSpellChecker.check(text, [thisBlock.language])
+            thisBlock.suggestions = suggestions
         }else{
             try {
-                suggestions = await this.plugin.onlineSpellChecker.check(text, [this.documentLanguage])
+                suggestions = await this.plugin.onlineSpellChecker.check(text, [thisBlock.language])
+                thisBlock.suggestions = suggestions
             }catch (_) {
                 showMessage(this.plugin.i18nx.errors.checkServer, 5000, 'error')
+                thisBlock.suggestions = null
             }
         }
-
-        this.blockStorage[blockID].suggestions = suggestions
 
     }
 
@@ -109,19 +114,35 @@ export class SuggestionEngine {
     }
 
     public async renderSuggestions(blockID: string) {
-        if(!(blockID in this.blockStorage) || !this.documentEnabled) {
+
+        if(!(blockID in this.blockStorage)) {
             return
         }
-        this.blockStorage[blockID].spellChecker.clearUnderlines()
-        this.blockStorage[blockID].suggestions.forEach(suggestion => {
-            if(!Settings.isInCustomDictionary(SuggestionEngine.suggestionToWrongText(suggestion, blockID), this.plugin.settingsUtil)) {
-                this.blockStorage[blockID].spellChecker.highlightCharacterRange(suggestion.offset, suggestion.offset + suggestion.length)
+        const thisBlock = this.blockStorage[blockID]
+        if(!document.contains(thisBlock.protyle.toNode())) {
+            delete this.blockStorage[blockID]
+            return
+        }
+
+        thisBlock.spellChecker.clearUnderlines()
+
+        thisBlock.suggestions?.forEach(suggestion => {
+            if(!Settings.isInCustomDictionary(this.suggestionToWrongText(suggestion, blockID), this.plugin.settingsUtil)) {
+                try {
+                    thisBlock.spellChecker.highlightCharacterRange(suggestion.offset, suggestion.offset + suggestion.length)
+                }catch (_) {
+                    delete this.blockStorage[blockID]
+                }
             }
         })
+
     }
 
-    static suggestionToWrongText(suggestion: Suggestion, blockID: string): string {
-        const blockTxt = ProtyleHelpers.fastGetBlockText(blockID)
+    public suggestionToWrongText(suggestion: Suggestion, blockID: string): string {
+        if(!(blockID in this.blockStorage)) {
+            return
+        }
+        const blockTxt = this.blockStorage[blockID].protyle.fastGetBlockText(blockID)
         return blockTxt.slice(suggestion.offset, suggestion.offset + suggestion.length)
     }
 
@@ -166,7 +187,7 @@ export class SuggestionEngine {
         console.log("dbg " + blockID + ' ' + suggestionNumber + ' ' + correctionNumber)
         console.log(this.blockStorage)
         const suggestion = this.blockStorage[blockID].suggestions[suggestionNumber]
-        const rich = ProtyleHelpers.fastGetBlockHTML(blockID)
+        const rich = new ProtyleHelper().fastGetBlockHTML(blockID)
         const fixedOffset = this.adjustIndexForTags(rich, suggestion.offset)
         const newStr = rich.slice(0, fixedOffset) + suggestion.replacements[correctionNumber] + rich.slice(fixedOffset + suggestion.length)
 

@@ -1,15 +1,21 @@
 import {getBlockAttrs} from "@/api";
 import SpellCheckPlugin from "@/index";
 
-export class ProtyleHelpers {
+export class ProtyleHelper {
 
-    // We shouldn't use JavaScript elements to get and set data in blocks, but the kernel API is noticeably too slow for this.
+    private contentElement: Element
+
+    constructor(contentElement?: Element) {
+        this.contentElement = contentElement || document.documentElement;
+    }
+
+    // We shouldn't use JavaScript elements to get data in blocks, but the kernel API is noticeably too slow for this.
     // We must try to keep the dependency to the HTML to a minimum.
 
     // doesn't use kernel API, so it's faster
-    public static fastGetBlockElement(blockID: string): Element {
+    public fastGetBlockElement(blockID: string): Element {
         const wrapper = Array.from(
-            document.querySelectorAll(`div[data-node-id="${blockID}"]`)
+            this.contentElement.querySelectorAll(`div[data-node-id="${blockID}"]`)
         ).find(el =>
             !el.closest('.protyle-wysiwyg__embed')   // true = not inside that class
         );
@@ -17,16 +23,16 @@ export class ProtyleHelpers {
         return wrapper?.querySelector(':scope > [contenteditable="true"]') ?? null;
     }
 
-    public static fastGetBlockHTML(blockID: string): string {
+    public fastGetBlockHTML(blockID: string): string {
         return this.fastGetBlockElement(blockID).innerHTML
     }
 
-    public static fastGetBlockText(blockID: string): string {
+    public fastGetBlockText(blockID: string): string {
         return this.fastGetBlockElement(blockID)?.textContent
     }
 
-    public static fastGetTitleElement(docID: string) {
-        const container = document.querySelector(`div.protyle-title.protyle-wysiwyg--attr[data-node-id="${docID}"]`);
+    public fastGetTitleElement() {
+        const container = this.contentElement.querySelector(`div.protyle-title.protyle-wysiwyg--attr`); // [data-node-id="${docID}"]
         if (!container) return null;
         return container.querySelector('div.protyle-title__input[contenteditable="true"]');
     }
@@ -57,9 +63,16 @@ export class ProtyleHelpers {
         }
     }
 
-    public static isProtyleReady(docID: string): boolean {
-        const protyleTitleContainer = document.querySelector(`div[class="protyle-title protyle-wysiwyg--attr"]`)
-        return protyleTitleContainer.getAttribute('data-node-id') == docID
+    public getBlockElements(): Element[] {
+        const allElements: Set<Element> = new Set();
+        this.contentElement.querySelectorAll('[data-node-id]').forEach(el => {
+            allElements.add(el);
+        });
+        return Array.from(allElements);
+    }
+
+    public toNode(): Node {
+        return this.contentElement
     }
 
 }

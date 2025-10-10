@@ -1,5 +1,5 @@
-import {Plugin, showMessage} from 'siyuan';
-import {ProtyleHelpers} from "@/protyleHelpers";
+import {IProtyle, Plugin, showMessage} from 'siyuan';
+import {ProtyleHelper} from "@/protyleHelper";
 import {Icons} from "@/icons";
 import {Settings} from "@/settings";
 import {SettingUtils} from "@/libs/setting-utils";
@@ -15,6 +15,7 @@ import {Language} from "@/spellChecker";
 export default class SpellCheckPlugin extends Plugin {
 
     private menus: Menus
+    private currentlyEditing: { protyle: ProtyleHelper, enabled: boolean, language: string };
 
     public settingsUtil: SettingUtils;
     public suggestions: SuggestionEngine
@@ -62,30 +63,34 @@ export default class SpellCheckPlugin extends Plugin {
         }`
         window.document.head.appendChild(style);
 
-        if(window.siyuan.config.editor.spellcheck) {
+        if (window.siyuan.config.editor.spellcheck) {
             showMessage(this.i18nx.errors.builtInEnabled, -1, 'error')
         }
 
         this.eventBus.on('ws-main', async (event) => {
 
-            if (event.detail.cmd != 'transactions') { return }
+            if (event.detail.cmd != 'transactions') {
+                return
+            }
 
             const operation = event.detail.data[0].doOperations[0]
             const action = operation.action
             const blockID = operation.id
 
-            if(action != 'update') { return }
+            if (action != 'update' || !this.currentlyEditing.enabled) {
+                return
+            }
 
+            await this.suggestions.storeBlocks(this.currentlyEditing.protyle, this.currentlyEditing.language)
             await this.suggestions.suggestAndRender(blockID)
-            void this.suggestions.forAllBlocksSuggest(this.suggestions.documentID, false, true, false)
+            void this.suggestions.forAllBlocksSuggest(false, true)
 
         })
 
         this.eventBus.on('open-menu-content', async (event) => {
 
-            if(!this.suggestions.documentEnabled) { return }
             void this.analytics.sendEvent('menu-open-any');
-            const blockID = ProtyleHelpers.getNodeId(event.detail.range.startContainer.parentElement)
+            const blockID = ProtyleHelper.getNodeId(event.detail.range.startContainer.parentElement)
 
             const suggNo = this.suggestions.getSuggestionNumber(blockID, event.detail.range)
             this.menus.addCorrectionsToParagraphMenu(blockID, suggNo, event.detail.menu)
@@ -93,31 +98,46 @@ export default class SpellCheckPlugin extends Plugin {
         })
 
         this.eventBus.on('open-menu-doctree', async (event) => {
-            const docID = ProtyleHelpers.getNodeId(event.detail.elements[0]) // @TODO this is ugly, why does the event not carry the docID?
+            const docID = ProtyleHelper.getNodeId(event.detail.elements[0]) // @TODO this is ugly, why does the event not carry the docID?
             void this.menus.addSettingsToDocMenu(docID, event.detail.menu)
         })
 
         this.eventBus.on('switch-protyle', async (event) => {
+            void this.suggestions.forAllBlocksSuggest(false, true)
+            const settings = await ProtyleHelper.getDocumentSettings(event.detail.protyle.block.id,
+                this.settingsUtil.get('enabledByDefault'), this.settingsUtil.get('defaultLanguage'))
+            this.currentlyEditing = {
+                protyle: new ProtyleHelper(event.detail.protyle.contentElement),
+                enabled: settings.enabled,
+                language: settings.language
+            }
+            new ResizeObserver(
+                this.suggestions.forAllBlocksSuggest.bind(this.suggestions)
+            ).observe(event.detail.protyle.contentElement)
+        })
 
-            const docID = event.detail.protyle.block.id
-            const settings = await ProtyleHelpers.getDocumentSettings(docID, this.settingsUtil.get('enabledByDefault'), this.settingsUtil.get('defaultLanguage'))
-
-            this.suggestions.documentID = docID
-            this.suggestions.documentEnabled = settings.enabled
-            this.suggestions.documentLanguage = settings.language
-
-            this.suggestions.clearStorage()
-            void this.suggestions.forAllBlocksSuggest(docID, true, true, false)
-
-            const activeEditor = document.querySelector('.fn__flex-1.protyle:not([class*="fn__none"])')
-            new ResizeObserver(this.reRenderSuggestions.bind(this)).observe(activeEditor)
-
+        this.eventBus.on('loaded-protyle-static', async (event) => {
+            await this.protyleLoad(event)
+        })
+        this.eventBus.on('loaded-protyle-dynamic', async (event) => {
+            await this.protyleLoad(event)
         })
 
     }
 
-    private reRenderSuggestions() {
-        void this.suggestions.forAllBlocksSuggest(this.suggestions.documentID, false, true, false)
+    private async protyleLoad(event: CustomEvent<{ protyle: IProtyle; }>) {
+
+        const protyle = new ProtyleHelper(event.detail.protyle.contentElement)
+        const docID = event.detail.protyle.block.id
+
+        const settings = await ProtyleHelper.getDocumentSettings(docID,
+            this.settingsUtil.get('enabledByDefault'), this.settingsUtil.get('defaultLanguage'))
+
+        if(settings.enabled) {
+            await this.suggestions.storeBlocks(protyle, settings.language)
+            void this.suggestions.forAllBlocksSuggest(true, true)
+        }
+
     }
 
     onunload() {
