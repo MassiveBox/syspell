@@ -10,7 +10,10 @@ This plugin adds a fully featured grammar and spell checker for SiYuan, powered 
 4. Right-click over an underlined word (or click the Menu keyboard button), hover on "Plugin", then... 
    - Click the error message to get a detailed explanation of the error
    - Click "Add to dictionary" to permanently ignore the error
-   - Click any of the corrections to apply them 
+   - Click any of the corrections to apply them
+
+> If, at any point, the underlines are not displayed correctly under the words, click on the currently active tab in
+SiYuan's tab selector or Document Tree, this will trigger a refresh of the underlines.
 
 ## ☑️ Features
 - [x] Spell checker

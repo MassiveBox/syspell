@@ -50,11 +50,11 @@
     },
     "offline": {
       "title": "Offline mode",
-      "description": "If enabled, the plugin will use a local spell checker, which is faster and more privacy friendly, but doesn't provide advanced grammar checking"
+      "description": "If enabled, the plugin will use a local spell checker, which is more privacy friendly and works without internet, but doesn't provide advanced grammar checking and may slow SiYuan down when a large note is being loaded."
     },
     "offlineDicts": {
       "title": "Offline dictionaries",
-      "description": "Comma-separated list of dictionaries used for offline spell checking. <a href='https://github.com/wooorm/dictionaries/tree/main/dictionaries'>Available options</a>. Example: <code>en,it</code>"
+      "description": "Comma-separated list of dictionaries used for offline spell checking. <a href='https://github.com/wooorm/dictionaries/tree/main/dictionaries'>Available options</a>. Example: <code>en,it</code><br>Set your primary language as first, and don't include unneeded languages, as they will only use more resources."
     }
   },
   "errors": {
