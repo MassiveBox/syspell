@@ -1,5 +1,4 @@
 import {SettingUtils} from "@/libs/setting-utils";
-import {showMessage} from 'siyuan';
 import SpellCheckPlugin from "@/index";
 import {LanguageTool, LanguageToolSettings} from "@/languagetool";
 
@@ -41,19 +40,15 @@ export class Settings {
             key: 'server',
             title: to.server.title,
             description: to.server.description,
-            value: 'https://lt.massive.box/'
+            value: 'https://api.languagetoolplus.com/'
         })
 
         await su.load() // needed to fetch languages from server
         let languagesKV = {}
-        try {
-            let languages = await new LanguageTool(<LanguageToolSettings>{server: su.get('server')}).getLanguages()
-            languages.forEach(language => {
-                languagesKV[language.longCode] = language.name + ' [' + language.longCode + ']'
-            })
-        } catch(e) {
-            showMessage(plugin.i18nx.errors.checkServer, -1, 'error')
-        }
+        let languages = await new LanguageTool(<LanguageToolSettings>{server: su.get('server')}).getLanguages()
+        languages.forEach(language => {
+            languagesKV[language.longCode] = language.name + ' [' + language.longCode + ']'
+        })
 
         su.addItem({
             type: 'textinput',
