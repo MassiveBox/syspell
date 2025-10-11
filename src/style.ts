@@ -1,12 +1,12 @@
 import {Plugin} from 'siyuan';
 
-export class Icons {
+export class Style {
 
     constructor(p: Plugin) {
         this.icons.forEach(icon =>
             p.addIcons(icon)
         )
-
+        this.applyStyle()
     }
 
     private icons = [
@@ -39,5 +39,28 @@ export class Icons {
             <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/>
         </symbol>`
     ]
+
+    private applyStyle() {
+        const style = document.createElement('style');
+        style.innerHTML = `
+        .underline-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .error-underline {
+           position: absolute;
+           height: 2px;
+           background-image: 
+               radial-gradient(circle at 2px 1px, #ff4444 1px, transparent 1px),
+               radial-gradient(circle at 6px 1px, #ff4444 1px, transparent 1px);
+           background-size: 8px 2px;
+           background-repeat: repeat-x;
+           background-position: 0 bottom;
+        }`
+        window.document.head.appendChild(style);
+    }
 
 }

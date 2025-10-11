@@ -1,6 +1,6 @@
 import {IProtyle, Plugin, showMessage} from 'siyuan';
 import {ProtyleHelper} from "@/protyleHelper";
-import {Icons} from "@/icons";
+import {Style} from "@/style";
 import {Settings} from "@/settings";
 import {SettingUtils} from "@/libs/setting-utils";
 import {Analytics} from "@/analytics";
@@ -31,37 +31,15 @@ export default class SpellCheckPlugin extends Plugin {
     async onload() {
 
         this.i18nx = this.i18n
-        new Icons(this);
+        new Style(this);
 
         this.settingsUtil = await Settings.init(this)
         this.analytics = new Analytics(this.settingsUtil.get('analytics'));
         this.suggestions = new SuggestionEngine(this)
         this.menus = new Menus(this)
-
         await this.prepareSpellCheckers()
 
         void this.analytics.sendEvent('load')
-
-        const style = document.createElement('style');
-        style.innerHTML = `
-        .underline-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 2;
-        }
-        .error-underline {
-           position: absolute;
-           height: 2px;
-           background-image: 
-               radial-gradient(circle at 2px 1px, #ff4444 1px, transparent 1px),
-               radial-gradient(circle at 6px 1px, #ff4444 1px, transparent 1px);
-           background-size: 8px 2px;
-           background-repeat: repeat-x;
-           background-position: 0 bottom;
-        }`
-        window.document.head.appendChild(style);
 
         if (window.siyuan.config.editor.spellcheck) {
             showMessage(this.i18nx.errors.builtInEnabled, -1, 'error')
