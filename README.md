@@ -3,6 +3,8 @@
 
 This plugin adds a fully featured grammar and spell checker for SiYuan, powered by [LanguageTool](https://languagetool.org/).
 
+▶️ [LiuYun thread](https://liuyun.io/article/1756302314285)
+
 ## 📃 Usage instructions
 1. Install the plugin from the SiYuan plugin store and enable it
 2. (Optional) Visit the plugin settings to configure it for your needs
