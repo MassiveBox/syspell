@@ -3,6 +3,7 @@ import SpellCheckPlugin from "@/index";
 import {getBlockAttrs, setBlockAttrs} from "@/api";
 import {Settings} from "@/settings";
 import {ProtyleHelper} from "@/protyleHelper";
+import {Analytics} from "@/analytics";
 
 export class Menus {
 
@@ -67,7 +68,9 @@ export class Menus {
 
     public async addSettingsToDocMenu(docID: string, menu: subMenu) {
 
-        menu.addItem({
+        let submenu = []
+
+        submenu.push({
             icon: 'info',
             label: this.plugin.i18nx.docMenu.documentStatus,
             click: async () => {
@@ -86,7 +89,7 @@ export class Menus {
             }
         })
 
-        menu.addItem({
+        submenu.push({
             icon: 'toggle',
             label: this.plugin.i18nx.docMenu.toggleSpellCheck,
             click: async () => {
@@ -104,7 +107,17 @@ export class Menus {
             }
         })
 
-        menu.addItem({
+        async function setLang(lang: string, analytics: Analytics) {
+            const attrs = await getBlockAttrs(docID)
+            attrs[SpellCheckPlugin.LANGUAGE_ATTR] = lang
+            await setBlockAttrs(docID, attrs)
+            void analytics.sendEvent('docmenu-click-setlang-2', {
+                'language': lang
+            });
+            location.reload()
+        }
+
+        submenu.push({
             icon: 'language',
             label: this.plugin.i18nx.docMenu.setDocumentLanguage,
             click: async (_, ev: MouseEvent) => {
@@ -114,34 +127,24 @@ export class Menus {
                 langMenu.addItem({
                     icon: 'autodetect',
                     label: this.plugin.i18nx.docMenu.autodetectLanguage,
-                    click: async () => {
-                        const attrs = await getBlockAttrs(docID)
-                        attrs[SpellCheckPlugin.LANGUAGE_ATTR] = 'auto'
-                        await setBlockAttrs(docID, attrs)
-                        void this.plugin.analytics.sendEvent('docmenu-click-setlang-2', {
-                            'language': 'auto'
-                        });
-                        location.reload()
-                    }
+                    click: async () => setLang('auto', this.plugin.analytics)
                 });
                 languages.forEach(language => {
                     langMenu.addItem({
                         icon: 'language',
                         label: language.name + ' [' + language.longCode + ']',
-                        click: async () => {
-                            const attrs = await getBlockAttrs(docID)
-                            attrs[SpellCheckPlugin.LANGUAGE_ATTR] = language.longCode
-                            await setBlockAttrs(docID, attrs)
-                            void this.plugin.analytics.sendEvent('docmenu-click-setlang-2', {
-                                'language': language.longCode
-                            });
-                            location.reload()
-                        }
+                        click: async () => setLang(language.longCode, this.plugin.analytics)
                     });
                 });
                 langMenu.open({ x: ev.clientX, y: ev.clientY });
 
             }
+        })
+
+        menu.addItem({
+            icon: 'spellcheck',
+            label: this.plugin.i18nx.syspell,
+            submenu: submenu
         })
 
     }
