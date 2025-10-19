@@ -48,6 +48,7 @@ export default class SpellCheckPlugin extends Plugin {
         this.eventBus.on('ws-main', async (event) => {
 
             if (event.detail.cmd != 'transactions') {
+                void this.suggestions.forAllBlocksSuggest(false, true)
                 return
             }
 
