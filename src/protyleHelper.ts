@@ -41,6 +41,28 @@ export class ProtyleHelper {
         return document.querySelector(`div.underline-overlay[for-block-id="${blockID}"]`)
     }
 
+    public static getElementAtTextIndex(root: Element, index: number): Node {
+        let currentOffset = 0;
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+
+        while (walker.nextNode()) {
+            let node = walker.currentNode
+            const textLength = node.textContent.length;
+
+            if (currentOffset + textLength >= index) {
+                let parent: Element = node.parentElement;
+                while (parent && parent != root) {
+                    node = parent
+                    parent = node.parentElement
+                }
+                return node; // The element containing this text
+            }
+            currentOffset += textLength;
+        }
+
+        return null;
+    }
+
     // given an element such as a span inside a block, return its blockID
     public static getNodeId(el: Element) {
         let i = 0;

@@ -20,6 +20,12 @@ export class SuggestionEngine {
     private blockStorage: BlockStorage = {};
     private plugin: SpellCheckPlugin;
 
+    private static blacklisted: string[] = [
+        "span[data-type='inline-math']",
+        "span[data-type='img']",
+        "span[data-type='code']"
+    ];
+
     constructor(plugin: SpellCheckPlugin) {
         this.plugin = plugin
     }
@@ -127,7 +133,8 @@ export class SuggestionEngine {
         thisBlock.spellChecker.clearUnderlines()
 
         thisBlock.suggestions?.forEach(suggestion => {
-            if(!Settings.isInCustomDictionary(this.suggestionToWrongText(suggestion, blockID), this.plugin.settingsUtil)) {
+            if(this.shouldSuggest(blockID, thisBlock, suggestion) &&
+                !Settings.isInCustomDictionary(this.suggestionToWrongText(suggestion, blockID), this.plugin.settingsUtil)) {
                 try {
                     thisBlock.spellChecker.highlightCharacterRange(suggestion.offset, suggestion.offset + suggestion.length)
                 }catch (_) {
@@ -135,6 +142,20 @@ export class SuggestionEngine {
                 }
             }
         })
+
+    }
+
+    private shouldSuggest(blockID: string, block: StoredBlock, suggestion: Suggestion): boolean {
+
+        const element = block.protyle.fastGetBlockElement(blockID)
+        const eai = ProtyleHelper.getElementAtTextIndex(element, suggestion.offset + suggestion.length)
+
+        for(let blacklisted of SuggestionEngine.blacklisted) {
+            if(eai instanceof Element && eai.matches(blacklisted)) {
+                return false
+            }
+        }
+        return true
 
     }
 

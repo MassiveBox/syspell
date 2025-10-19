@@ -49,7 +49,7 @@ export class SpellCheckerUI {
         // Find the text nodes and character positions
         const range = this.createRangeFromCharacterIndices(startIndex, endIndex);
         if (range) {
-            this.createUnderlineFromRange(range, endIndex - startIndex);
+            this.createUnderlineFromRange(range);
         }
     }
 
@@ -101,7 +101,7 @@ export class SpellCheckerUI {
         return null;
     }
 
-    private createUnderlineFromRange(range: Range, charsCount:  number) {
+    private createUnderlineFromRange(range: Range) {
         const rects = range.getClientRects();
         const editorRect = this.block.getBoundingClientRect();
 
@@ -120,17 +120,8 @@ export class SpellCheckerUI {
             underline.style.top = (top + 2 + offset.v) + 'px';
             underline.style.width = width + 'px';
 
-            if(!SpellCheckerUI.checkDontUnderline(width, charsCount)) {
-                this.overlay.appendChild(underline);
-            }
+            this.overlay.appendChild(underline);
         }
-    }
-
-    // if the underline is too wide for the number of characters that are underlined, we don't render it
-    // this is a consequence of using .innerText: things like <img> tags are only a character
-    private static checkDontUnderline(width: number, charsCount: number) {
-        const maxWidthPerChar = 16;
-        return width > maxWidthPerChar * charsCount
     }
 
     private static distance(elA: HTMLElement, elB: HTMLElement): {h: number, v: number} {
