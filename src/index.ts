@@ -114,7 +114,8 @@ export default class SpellCheckPlugin extends Plugin {
 
         if(settings.enabled) {
             await this.suggestions.storeBlocks(protyle, settings.language)
-            void this.suggestions.forAllBlocksSuggest(true, true)
+            const useOnline = this.settingsUtil.get('online');
+            void this.suggestions.forAllBlocksSuggest(true, true, useOnline ? undefined : 10);
         }
 
     }

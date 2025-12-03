@@ -66,19 +66,29 @@ export class SuggestionEngine {
         })
     }
 
-    public async forAllBlocksSuggest(suggest: boolean = false, render: boolean = true) {
-        const blockPromises = Object.keys(this.blockStorage).map(async (blockID) => {
-            if(!(blockID in this.blockStorage)) {
-                return
-            }
-            if(suggest && this.blockStorage[blockID].suggestions == null) {
-                await this.suggestForBlock(blockID)
-            }
-            if(render) {
-                await this.renderSuggestions(blockID)
-            }
-        });
-        await Promise.all(blockPromises);
+    public async forAllBlocksSuggest(suggest: boolean = false, render: boolean = true, concurrencyLimit: number = 1000) {
+
+        const blockIDs = Object.keys(this.blockStorage);
+        for (let i = 0; i < blockIDs.length; i += concurrencyLimit) {
+
+            const batch = blockIDs.slice(i, i + concurrencyLimit);
+            const blockPromises = batch.map(async (blockID) => {
+                if(!(blockID in this.blockStorage)) {
+                    return
+                }
+                if(suggest === true && this.blockStorage[blockID].suggestions == null) {
+                    await this.suggestForBlock(blockID)
+                }
+                if(render) {
+                    await this.renderSuggestions(blockID)
+                }
+            });
+            await Promise.all(blockPromises);
+            // yield to the event loop to prevent UI freezing
+            await new Promise(resolve => setTimeout(resolve, 1));
+
+        }
+
     }
 
     public async suggestAndRender(blockID: string) {
@@ -148,14 +158,13 @@ export class SuggestionEngine {
     private shouldSuggest(blockID: string, block: StoredBlock, suggestion: Suggestion): boolean {
 
         const element = block.protyle.fastGetBlockElement(blockID)
-        const eai = ProtyleHelper.getElementAtTextIndex(element, suggestion.offset + suggestion.length)
+        const eaiStart = ProtyleHelper.getElementAtTextIndex(element, suggestion.offset)
+        const eaiEnd = ProtyleHelper.getElementAtTextIndex(element, suggestion.offset + suggestion.length)
 
-        for(let blacklisted of SuggestionEngine.blacklisted) {
-            if(eai instanceof Element && eai.matches(blacklisted)) {
-                return false
-            }
-        }
-        return true
+        return !SuggestionEngine.blacklisted.some(blacklisted =>
+            (eaiStart instanceof Element && eaiStart.matches(blacklisted)) ||
+            (eaiEnd instanceof Element && eaiEnd.matches(blacklisted))
+        );
 
     }
 
@@ -188,7 +197,7 @@ export class SuggestionEngine {
         const offset = this.getAbsoluteOffsetInBlock(range, blockID)
         let suggNo = -1
 
-        this.blockStorage[blockID].suggestions.forEach((suggestion, i) => {
+        this.blockStorage[blockID].suggestions?.forEach((suggestion, i) => {
             if(offset >= suggestion.offset && offset <= suggestion.offset + suggestion.length) {
                 suggNo = i
             }
