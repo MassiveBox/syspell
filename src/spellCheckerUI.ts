@@ -42,7 +42,6 @@ export class SpellCheckerUI {
         // Get all text content
         const textContent = this.block?.innerText || '';
         if (startIndex >= textContent.length || endIndex > textContent.length || startIndex >= endIndex) {
-            console.log('Invalid range');
             return;
         }
 

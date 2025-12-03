@@ -42,6 +42,7 @@ export class ProtyleHelper {
     }
 
     public static getElementAtTextIndex(root: Element, index: number): Node {
+        if(!root) { return }
         let currentOffset = 0;
         const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
 
