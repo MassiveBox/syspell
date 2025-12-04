@@ -111,6 +111,14 @@ export class Settings {
 
         su.addItem({
             type: 'checkbox',
+            key: 'reportAuto',
+            title: to.reportAuto.title,
+            description: to.reportAuto.description,
+            value: true
+        })
+
+        su.addItem({
+            type: 'checkbox',
             key: 'offline',
             title: to.offline.title,
             description: to.offline.description,

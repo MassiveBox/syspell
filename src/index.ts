@@ -85,6 +85,9 @@ export default class SpellCheckPlugin extends Plugin {
             void this.suggestions.forAllBlocksSuggest(false, true)
             const settings = await ProtyleHelper.getDocumentSettings(event.detail.protyle.block.id,
                 this.settingsUtil.get('enabledByDefault'), this.settingsUtil.get('defaultLanguage'))
+            if(settings.language == 'auto' && this.settingsUtil.get('online')) {
+                showMessage(this.i18nx.errors.autoLanguage, -1, 'info')
+            }
             this.currentlyEditing = {
                 protyle: new ProtyleHelper(event.detail.protyle.contentElement),
                 enabled: settings.enabled,
