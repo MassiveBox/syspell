@@ -33,13 +33,13 @@ SiYuan's tab selector or Document Tree, this will trigger a refresh of the under
 
    </details>
 
-Check out the [Projects](https://git.massive.box/massivebox/siyuan-spellchecker/projects) for the planned features!
+Check out the [Projects](https://git.boxo.cc/massivebox/siyuan-spellchecker/projects) for the planned features!
 
 ## 🛠 Contributing
 I'm respecting LanguageTool's guidelines by running a LanguageTool server, on my own hardware, for the benefit of this
 plugin's users, instead of having them use the official one.  
 I'm providing this service for free, but it's not free for me to run it: the LanguageTool server is very resource intensive.  
-If you can, consider [donating](https://s.massive.box/siyuan-plugin-donate) to help me keep it up forever. Thanks!
+If you can, consider [donating](https://s.boxo.cc/siyuan-plugin-donate) to help me keep it up forever. Thanks!
 
 You can also contribute by opening an issue or a pull request. Thanks!
 

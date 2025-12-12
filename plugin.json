@@ -1,7 +1,7 @@
 {
   "name": "syspell",
   "author": "massivebox",
-  "url": "https://git.massive.box/massivebox/syspell",
+  "url": "https://git.boxo.cc/massivebox/syspell",
   "version": "0.4.0",
   "minAppVersion": "3.0.12",
   "backends": [
@@ -31,7 +31,7 @@
   },
   "funding": {
     "custom": [
-      "https://s.massive.box/siyuan-plugin-donate"
+      "https://s.boxo.cc/siyuan-plugin-donate"
     ]
   },
   "keywords": [

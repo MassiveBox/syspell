@@ -5,7 +5,7 @@ export class Analytics {
 
     private readonly enabled: boolean;
 
-    private static readonly ENDPOINT = 'https://stats.massive.box/api/send_noua';
+    private static readonly ENDPOINT = 'https://stats.boxo.cc/api/send_noua';
     private static readonly WEBSITE_ID = '6963975c-c7e7-495f-a4f0-fa1a0d3e64ac';
 
     constructor(enabled: boolean) {

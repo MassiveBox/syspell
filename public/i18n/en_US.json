@@ -16,11 +16,11 @@
     },
     "info": {
       "title": "Information",
-      "description": "The default grammar checking server is provided for free by the developer, <a href='https://massive.box'>MassiveBox</a>. It does not save, sell or share the content of your text.<br>Running a LanguageTool server is resource intensive, so if you find this plugin useful, please consider <a href=\"https://s.massive.box/siyuan-plugin-donate\">donating</a> to help me keep it alive!"
+      "description": "The default grammar checking server is provided for free by the developer, <a href='https://boxo.cc'>MassiveBox</a>. It does not save, sell or share the content of your text.<br>Running a LanguageTool server is resource intensive, so if you find this plugin useful, please consider <a href=\"https://s.boxo.cc/siyuan-plugin-donate\">donating</a> to help me keep it alive!"
     },
     "server": {
       "title": "LanguageTool server",
-      "description": "The URL of the LanguageTool server, with the trailing slash. Some suggestions:\n<li>Free server provided by the plugin developer, slower but without limits: <code>https://lt.massive.box/</code></li>\n<li>Free server provided by LanguageTool, very strict rate limits: <code>https://languagetool.org/api/</code></li>\n<li>If you have <a href=\"https://languagetool.org/premium\">LanguageTool Premium</a>: <code>https://api.languagetoolplus.com/</code></li>\n<li>If you're running the self-hosted <a href=\"https://dev.languagetool.org/http-server\">embedded server</a>: <code>http://localhost:8081/</code></li>"
+      "description": "The URL of the LanguageTool server, with the trailing slash. Some suggestions:\n<li>Free server provided by the plugin developer, slower but without limits: <code>https://lt.boxo.cc/</code></li>\n<li>Free server provided by LanguageTool, very strict rate limits: <code>https://languagetool.org/api/</code></li>\n<li>If you have <a href=\"https://languagetool.org/premium\">LanguageTool Premium</a>: <code>https://api.languagetoolplus.com/</code></li>\n<li>If you're running the self-hosted <a href=\"https://dev.languagetool.org/http-server\">embedded server</a>: <code>http://localhost:8081/</code></li>"
     },
     "username": {
       "title": "LanguageTool Account username [Optional]",
@@ -52,7 +52,7 @@
     },
     "analytics": {
       "title": "Analytics",
-      "description": "Enable to send anonymous usage data to the developer. <a href='https://s.massive.box/jsdraw-plugin-privacy'>Privacy Policy</a>"
+      "description": "Enable to send anonymous usage data to the developer. <a href='https://s.boxo.cc/jsdraw-plugin-privacy'>Privacy Policy</a>"
     },
     "customDictionary": {
       "title": "Custom dictionary",

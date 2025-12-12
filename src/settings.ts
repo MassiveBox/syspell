@@ -97,11 +97,15 @@ export class Settings {
         if(this.get(key) == undefined) {
             this.set(key, defaultValue)
         }
+        let val = this.get(key);
+        if(key == 'server' && val == 'https://lt.massive.box/') { // domain migration
+            this.set('server', 'https://lt.boxo.cc/')
+        }
         let to = this.plugin.i18nx.settings;
         return {
             type: type,
             key: key,
-            value: this.get(key),
+            value: val,
             title: to[key].title,
             description: to[key].description,
             options: options
