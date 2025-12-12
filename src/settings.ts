@@ -1,169 +1,161 @@
-import {SettingUtils} from "@/libs/setting-utils";
 import SpellCheckPlugin from "@/index";
-import {LanguageTool, LanguageToolSettings} from "@/languagetool";
+import {Dialog, showMessage} from "siyuan";
+import SettingsUI from "@/settingsUI.svelte";
+import {LanguageTool} from "@/languagetool";
+
+export type SettingsUIGroup = {
+    id: number
+    name: string
+    tip: string
+    items: ISettingItem[]
+}
 
 export class Settings {
 
-    static async init(plugin: SpellCheckPlugin): Promise<SettingUtils> {
+    public static SETTINGS_FILE_NAME = 'syspell.json'
 
-        const to = plugin.i18nx.settings
-        const su = new SettingUtils({
-            plugin: plugin, name: plugin.name
+    private settingsUIGroups: SettingsUIGroup[]
+
+    private plugin: SpellCheckPlugin
+    private settings: object
+    public changedDialog: boolean = false
+
+    constructor(plugin: SpellCheckPlugin) {
+        this.plugin = plugin
+    }
+
+    public async load() {
+        this.settings = await this.plugin.loadData(Settings.SETTINGS_FILE_NAME)
+        let save = false
+        if(typeof this.settings == 'string') {
+            // no file = first run
+            this.settings = {}
+            save = true
+        }
+        await this.populateUIGroupsAndSetMissing()
+        if(save) {
+            await this.save()
+        }
+    }
+
+    public async save() {
+        await this.plugin.saveData(Settings.SETTINGS_FILE_NAME, this.settings)
+    }
+
+    public get(key: string): any {
+        return this.settings[key]
+    }
+    public set(key: string, value: any): void {
+        this.settings[key] = value;
+    }
+    public dump(): any {
+        return this.settings
+    }
+
+    public async openSettingsDialog() {
+
+        let dialog = new Dialog({
+            title: this.plugin.i18nx.settings.settings,
+            content: `<div id="SettingPanel" style="height: 100%;"></div>`,
+            width: "800px",
+            height: "80%",
+            destroyCallback: () => {
+                panel.$destroy();
+                if(this.changedDialog) {
+                    showMessage(this.plugin.i18nx.settings.didntSave, -1, 'info')
+                }
+            }
         });
-
-        su.addItem({
-            type: 'hint',
-            key: 'info',
-            title: to.info.title,
-            description: to.info.description,
-            value: ''
-        })
-
-        su.addItem({
-            type: 'checkbox',
-            key: 'experimentalCorrect',
-            title: to.experimentalCorrect.title,
-            description: to.experimentalCorrect.description,
-            value: false
-        })
-
-        su.addItem({
-            type: 'textarea',
-            key: 'customDictionary',
-            title: to.customDictionary.title,
-            description: to.customDictionary.description,
-            value: 'SySpell,SiYuan'
-        })
-
-        su.addItem({
-            type: 'textinput',
-            key: 'server',
-            title: to.server.title,
-            description: to.server.description,
-            value: 'https://api.languagetoolplus.com/'
-        })
-
-        await su.load() // needed to fetch languages from server
-        let languagesKV = {}
-        let languages = await new LanguageTool(<LanguageToolSettings>{server: su.get('server')}).getLanguages()
-        languages.forEach(language => {
-            languagesKV[language.longCode] = language.name + ' [' + language.longCode + ']'
-        })
-
-        su.addItem({
-            type: 'textinput',
-            key: 'username',
-            title: to.username.title,
-            description: to.username.description,
-            value: ''
-        })
-
-        su.addItem({
-            type: 'textinput',
-            key: 'apiKey',
-            title: to.apiKey.title,
-            description: to.apiKey.description,
-            value: ''
-        })
-
-        su.addItem({
-            type: 'checkbox',
-            key: 'picky',
-            title: to.picky.title,
-            description: to.picky.description,
-            value: false
-        })
-
-        su.addItem({
-            type: 'select',
-            key: 'motherTongue',
-            title: to.motherTongue.title,
-            description: to.motherTongue.description,
-            value: (window.navigator.language in languagesKV) ? window.navigator.language : 'en-US',
-            options: languagesKV
-        })
-
-        su.addItem({
-            type: 'textinput',
-            key: 'preferredVariants',
-            title: to.preferredVariants.title,
-            description: to.preferredVariants.description,
-            value: 'en-US,de-DE'
-        })
-
-        su.addItem({
-            type: 'checkbox',
-            key: 'enabledByDefault',
-            title: to.enabledByDefault.title,
-            description: to.enabledByDefault.description,
-            value: true
-        })
-
-        languagesKV['auto'] = plugin.i18nx.docMenu.autodetectLanguage
-        su.addItem({
-            type: 'select',
-            key: 'defaultLanguage',
-            title: to.defaultLanguage.title,
-            description: to.defaultLanguage.description,
-            options: languagesKV,
-            value: 'auto'
-        })
-
-        su.addItem({
-            type: 'checkbox',
-            key: 'reportAuto',
-            title: to.reportAuto.title,
-            description: to.reportAuto.description,
-            value: true
-        })
-
-        su.addItem({
-            type: 'checkbox',
-            key: 'offline',
-            title: to.offline.title,
-            description: to.offline.description,
-            value: false
-        })
-
-        su.addItem({
-            type: 'textinput',
-            key: 'offlineDicts',
-            title: to.offlineDicts.title,
-            description: to.offlineDicts.description,
-            value: 'en'
-        })
-
-        su.addItem({
-            type: 'checkbox',
-            key: 'analytics',
-            title: to.analytics.title,
-            description: to.analytics.description,
-            value: true
-        })
-
-        su.save = async function (data?: any) {
-            data = data ?? this.dump();
-            await this.plugin.saveData(this.file, this.dump());
-            location.reload()
-        }.bind(su)
-
-        await su.load()
-        return su
+        await this.populateUIGroupsAndSetMissing() // refresh UI groups to ensure consistency between this.settings and UI data
+        let panel = new SettingsUI({
+            target: dialog.element.querySelector("#SettingPanel"),
+            props: {
+                i18n: this.plugin.i18nx,
+                groups: this.settingsUIGroups,
+                settings: this
+            }
+        });
 
     }
 
     // dictionary is a string of words separated by commas
-    static isInCustomDictionary(word: string, settings: SettingUtils) {
-        const dictionary = settings.get('customDictionary').split(',')
+    public isInCustomDictionary(word: string) {
+        const dictionary = this.get('customDictionary').split(',')
         return dictionary.includes(word)
     }
 
-    static addToDictionary(word: string, settings: SettingUtils) {
-        const dictionary = settings.get('customDictionary').split(',')
+    public async addToDictionary(word: string) {
+        const dictionary = this.get('customDictionary').split(',')
         if (!dictionary.includes(word)) {
             dictionary.push(word)
-            return settings.setAndSave('customDictionary', dictionary.join(','))
+            this.set('customDictionary', dictionary.join(','))
+            await this.save()
         }
+    }
+
+    private settingsItem(type: TSettingItemType, key: string, defaultValue: any, options?: any) {
+        if(this.get(key) == undefined) {
+            this.set(key, defaultValue)
+        }
+        let to = this.plugin.i18nx.settings;
+        return {
+            type: type,
+            key: key,
+            value: this.get(key),
+            title: to[key].title,
+            description: to[key].description,
+            options: options
+        }
+    }
+
+    private async populateUIGroupsAndSetMissing() {
+
+        let to = this.plugin.i18nx.settings;
+        let languagesKV = Object.fromEntries(
+            (await new LanguageTool(null).getLanguages()).map(language => [
+                language.longCode,
+                `${language.name} [${language.longCode}]`
+            ])
+        );
+        let languagesKVWithAuto = {auto: 'Auto detect', ...languagesKV};
+
+        this.settingsUIGroups = [
+            {
+                id: 0,
+                name: to.sections.general,
+                tip: to.sections.generalTip,
+                items: [
+                    this.settingsItem('checkbox', 'enabledByDefault', true),
+                    this.settingsItem('checkbox', 'offline', false),
+                    this.settingsItem('checkbox', 'experimentalCorrect', false),
+                    this.settingsItem('textinput', 'customDictionary', 'SySpell,SiYuan'),
+                    this.settingsItem('checkbox', 'analytics', true),
+                ]
+            },
+            {
+                id: 1,
+                name: to.sections.online,
+                tip: to.sections.onlineTip,
+                items: [
+                    this.settingsItem('textinput', 'server', 'https://api.languagetoolplus.com/'),
+                    this.settingsItem('textinput', 'username', ''),
+                    this.settingsItem('textinput', 'apiKey', ''),
+                    this.settingsItem('checkbox', 'picky', false),
+                    this.settingsItem('select', 'motherTongue', (window.navigator.language in languagesKV) ? window.navigator.language : 'en-US', languagesKV),
+                    this.settingsItem('textinput', 'preferredVariants', 'en-US,de-DE'),
+                    this.settingsItem('select', 'defaultLanguage', 'auto', languagesKVWithAuto),
+                    this.settingsItem('checkbox', 'reportAuto', false)
+                ]
+            },
+            {
+                id: 2,
+                name: to.sections.offline,
+                tip: to.sections.offlineTip,
+                items: [
+                    this.settingsItem('textinput', 'offlineDicts', 'en'),
+                ]
+            }
+        ]
     }
 
 }

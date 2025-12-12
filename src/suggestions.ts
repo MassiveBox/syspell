@@ -1,5 +1,4 @@
 import {ProtyleHelper} from "@/protyleHelper";
-import {Settings} from "@/settings";
 import {updateBlock} from "@/api";
 import {SpellCheckerUI} from "@/spellCheckerUI";
 import {showMessage} from "siyuan";
@@ -110,7 +109,7 @@ export class SuggestionEngine {
             return
         }
 
-        if(this.plugin.settingsUtil.get('offline')) {
+        if(this.plugin.settings.get('offline')) {
             suggestions = await this.plugin.offlineSpellChecker.check(text, [thisBlock.language])
             thisBlock.suggestions = suggestions
         }else{
@@ -144,7 +143,7 @@ export class SuggestionEngine {
 
         thisBlock.suggestions?.forEach(suggestion => {
             if(this.shouldSuggest(blockID, thisBlock, suggestion) &&
-                !Settings.isInCustomDictionary(this.suggestionToWrongText(suggestion, blockID), this.plugin.settingsUtil)) {
+                !this.plugin.settings.isInCustomDictionary(this.suggestionToWrongText(suggestion, blockID))) {
                 try {
                     thisBlock.spellChecker.highlightCharacterRange(suggestion.offset, suggestion.offset + suggestion.length)
                 }catch (_) {

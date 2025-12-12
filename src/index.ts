@@ -1,8 +1,6 @@
 import {IProtyle, Plugin, showMessage} from 'siyuan';
 import {ProtyleHelper} from "@/protyleHelper";
 import {Style} from "@/style";
-import {Settings} from "@/settings";
-import {SettingUtils} from "@/libs/setting-utils";
 import {Analytics} from "@/analytics";
 import {SuggestionEngine} from "@/suggestions";
 import {Menus} from "@/menus";
@@ -10,6 +8,7 @@ import {ESpellChecker} from "@/espells";
 import {LanguageTool, LanguageToolSettings} from "@/languagetool";
 import {HunspellDictManager} from "@/hunspellDictManager";
 import {Language} from "@/spellChecker";
+import {Settings} from "@/settings";
 
 
 export default class SpellCheckPlugin extends Plugin {
@@ -17,7 +16,7 @@ export default class SpellCheckPlugin extends Plugin {
     private menus: Menus
     private currentlyEditing: { protyle: ProtyleHelper, enabled: boolean, language: string };
 
-    public settingsUtil: SettingUtils;
+    public settings: Settings;
     public suggestions: SuggestionEngine
     public analytics: Analytics
     public i18nx: any; // This object is just a copy of i18n, but with type "any" to not trigger type errors
@@ -33,8 +32,9 @@ export default class SpellCheckPlugin extends Plugin {
         this.i18nx = this.i18n
         new Style(this);
 
-        this.settingsUtil = await Settings.init(this)
-        this.analytics = new Analytics(this.settingsUtil.get('analytics'));
+        this.settings = new Settings(this)
+        await this.settings.load()
+        this.analytics = new Analytics(this.settings.get('analytics'));
         this.suggestions = new SuggestionEngine(this)
         this.menus = new Menus(this)
         await this.prepareSpellCheckers()
@@ -83,15 +83,15 @@ export default class SpellCheckPlugin extends Plugin {
 
         this.eventBus.on('switch-protyle', async (event) => {
             void this.suggestions.forAllBlocksSuggest(false, true)
-            const settings = await ProtyleHelper.getDocumentSettings(event.detail.protyle.block.id,
-                this.settingsUtil.get('enabledByDefault'), this.settingsUtil.get('defaultLanguage'))
-            if(settings.language == 'auto' && this.settingsUtil.get('online')) {
+            const documentSettings = await ProtyleHelper.getDocumentSettings(event.detail.protyle.block.id,
+                this.settings.get('enabledByDefault'), this.settings.get('defaultLanguage'))
+            if(documentSettings.language == 'auto' && !this.settings.get('offline') && this.settings.get('reportAuto')) {
                 showMessage(this.i18nx.errors.autoLanguage, -1, 'info')
             }
             this.currentlyEditing = {
                 protyle: new ProtyleHelper(event.detail.protyle.contentElement),
-                enabled: settings.enabled,
-                language: settings.language
+                enabled: documentSettings.enabled,
+                language: documentSettings.language
             }
             new ResizeObserver(
                 this.suggestions.forAllBlocksSuggest.bind(this.suggestions)
@@ -107,22 +107,6 @@ export default class SpellCheckPlugin extends Plugin {
 
     }
 
-    private async protyleLoad(event: CustomEvent<{ protyle: IProtyle; }>) {
-
-        const protyle = new ProtyleHelper(event.detail.protyle.contentElement)
-        const docID = event.detail.protyle.block.id
-
-        const settings = await ProtyleHelper.getDocumentSettings(docID,
-            this.settingsUtil.get('enabledByDefault'), this.settingsUtil.get('defaultLanguage'))
-
-        if(settings.enabled) {
-            await this.suggestions.storeBlocks(protyle, settings.language)
-            const useOnline = this.settingsUtil.get('online');
-            void this.suggestions.forAllBlocksSuggest(true, true, useOnline ? undefined : 10);
-        }
-
-    }
-
     onunload() {
         void this.analytics.sendEvent('unload');
     }
@@ -131,10 +115,30 @@ export default class SpellCheckPlugin extends Plugin {
         void this.analytics.sendEvent('uninstall');
     }
 
+    async openSetting() {
+        await this.settings.openSettingsDialog()
+    }
+
+    private async protyleLoad(event: CustomEvent<{ protyle: IProtyle; }>) {
+
+        const protyle = new ProtyleHelper(event.detail.protyle.contentElement)
+        const docID = event.detail.protyle.block.id
+
+        const settings = await ProtyleHelper.getDocumentSettings(docID,
+            this.settings.get('enabledByDefault'), this.settings.get('defaultLanguage'))
+
+        if(settings.enabled) {
+            await this.suggestions.storeBlocks(protyle, settings.language)
+            const useOnline = !this.settings.get('offline');
+            void this.suggestions.forAllBlocksSuggest(true, true, useOnline ? undefined : 10);
+        }
+
+    }
+
     private async prepareSpellCheckers() {
 
-        this.onlineSpellChecker = new LanguageTool(<LanguageToolSettings>this.settingsUtil.dump())
-        const offlineLanguages = this.settingsUtil.get('offlineDicts').split(',')
+        this.onlineSpellChecker = new LanguageTool(<LanguageToolSettings>this.settings.dump())
+        const offlineLanguages = this.settings.get('offlineDicts').split(',')
 
         let langs: {aff: string, dic: string, language: Language}[] = []
 

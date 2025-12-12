@@ -1,7 +1,6 @@
 import {Menu, showMessage, subMenu} from 'siyuan';
 import SpellCheckPlugin from "@/index";
 import {getBlockAttrs, setBlockAttrs} from "@/api";
-import {Settings} from "@/settings";
 import {ProtyleHelper} from "@/protyleHelper";
 import {Analytics} from "@/analytics";
 
@@ -38,7 +37,7 @@ export class Menus {
                 click: async () => {
                     void this.plugin.analytics.sendEvent('menu-click-add-to-dictionary');
                     const word = this.plugin.suggestions.suggestionToWrongText(suggestion, blockID)
-                    await Settings.addToDictionary(word, this.plugin.settingsUtil)
+                    await this.plugin.settings.addToDictionary(word)
                     showMessage(this.plugin.i18nx.textMenu.addedToDictionary + word, 5000, 'info')
                     await this.plugin.suggestions.renderSuggestions(blockID)
                 }
@@ -54,7 +53,7 @@ export class Menus {
                     void this.plugin.analytics.sendEvent('menu-click-correct', {
                         'type': suggestion.typeName
                     });
-                    if(this.plugin.settingsUtil.get('experimentalCorrect')) {
+                    if(this.plugin.settings.get('experimentalCorrect')) {
                         void this.plugin.suggestions.correctSuggestion(blockID, suggestionNumber, correctionNumber)
                     }else{
                         void navigator.clipboard.writeText(replacement)
@@ -74,7 +73,7 @@ export class Menus {
             icon: 'info',
             label: this.plugin.i18nx.docMenu.documentStatus,
             click: async () => {
-                const settings = await ProtyleHelper.getDocumentSettings(docID, this.plugin.settingsUtil.get('enabledByDefault'), this.plugin.settingsUtil.get('defaultLanguage'))
+                const settings = await ProtyleHelper.getDocumentSettings(docID, this.plugin.settings.get('enabledByDefault'), this.plugin.settings.get('defaultLanguage'))
                 if(settings == null) {
                     void this.plugin.analytics.sendEvent('docmenu-click-info-notebook');
                     showMessage(this.plugin.i18nx.errors.notImplementedNotebookSettings, 5000, 'info')
@@ -95,7 +94,7 @@ export class Menus {
             click: async () => {
                 void this.plugin.analytics.sendEvent('docmenu-click-toggle');
                 const attrs = await getBlockAttrs(docID)
-                const settings = await ProtyleHelper.getDocumentSettings(docID, this.plugin.settingsUtil.get('enabledByDefault'), this.plugin.settingsUtil.get('defaultLanguage'))
+                const settings = await ProtyleHelper.getDocumentSettings(docID, this.plugin.settings.get('enabledByDefault'), this.plugin.settings.get('defaultLanguage'))
                 if(settings == null) {
                     void this.plugin.analytics.sendEvent('docmenu-click-info-notebook');
                     showMessage(this.plugin.i18nx.errors.notImplementedNotebookSettings, 5000, 'info')
