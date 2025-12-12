@@ -1,6 +1,6 @@
 {
   "name": "syspell",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "type": "module",
   "description": "This SiYuan plugin adds a fully featured grammar and spell checker, powered by LanguageTool.",
   "repository": "https://git.boxo.cc/massivebox/syspell",
